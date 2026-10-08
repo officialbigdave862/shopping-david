@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Checkout | SHOPPING DAVID</title>
+
+    <link rel="stylesheet" href="/SHOPPING%20DAVID/css/style.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+
+        <div class="container nav-container">
+
+            <a href="index.html" class="logo">
+    <img src="images/bigdavebig7-logo.png" alt="BIGdaveBIG7 SHOPPING"></a>
+
+            <button class="menu-toggle" type="button">
+                ☰
+            </button>
+
+            <nav class="nav">
+
+                <a href="index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+
+                <a href="cart.html" class="cart-link">
+                    Cart
+                    <span class="cart-count">0</span>
+                </a>
+                <a href="customer/login.php">
+    My Account
+</a>
+
+            </nav>
+
+        </div>
+
+    </header>
+
+
+    <!-- PAGE HEADER -->
+    <section class="page-header">
+
+        <div class="container">
+
+            <h1>Checkout</h1>
+
+            <p>
+                Complete your order and delivery information.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- CHECKOUT -->
+    <main class="checkout-page">
+
+        <div class="container">
+
+            <div class="checkout-grid">
+
+
+                <!-- CUSTOMER INFORMATION -->
+                <div class="checkout-left">
+
+                    <form id="checkoutForm" class="checkout-form">
+
+                        <h2>Delivery Information</h2>
+
+                        <div class="form-grid">
+
+                            <label>
+                                Full Name
+
+                                <input
+                                    type="text"
+                                    name="name"
+                                    required
+                                    placeholder="Your full name"
+                                >
+                            </label>
+
+
+                            <label>
+                                Phone Number
+
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    required
+                                    placeholder="+234..."
+                                >
+                            </label>
+
+
+                            <label>
+                                Email Address
+
+                                <input
+                                    type="email"
+                                    name="email"
+                                    required
+                                    placeholder="you@example.com"
+                                >
+                            </label>
+
+
+                            <label>
+                                City
+
+                                <input
+                                    type="text"
+                                    name="city"
+                                    required
+                                    placeholder="Lagos"
+                                >
+                            </label>
+
+                        </div>
+
+
+                        <label>
+                            Delivery Address
+
+                            <textarea
+                                name="address"
+                                required
+                                placeholder="House number, street, area..."
+                            ></textarea>
+
+                        </label>
+
+
+                        <h2>Payment Method</h2>
+
+                        <div class="payment-options">
+
+    <label>
+        <input
+            type="radio"
+            name="payment"
+            value="moniepoint_transfer"
+            checked
+        >
+
+        Pay by Moniepoint Transfer
+    </label>
+</div>
+
+<!-- MONIEPOINT TRANSFER DETAILS -->
+<div id="moniepointBox" style="margin-top:15px; padding:16px; border:1px solid #ddd; border-radius:10px; background:#fafafa;">
+    <h3 style="margin-top:0;">Moniepoint Bank Transfer</h3>
+
+    <p><strong>Bank:</strong> Moniepoint</p>
+    <p><strong>Account Name:</strong> IBRAHIM ABDULQUDUS ENESI</p>
+    <p><strong>Account Number:</strong> 8147146338</p>
+
+    <p style="margin-bottom:8px;">
+        Transfer the exact order total to the account above, then enter your transfer reference below.
+    </p>
+
+    <label>
+        Transfer Reference
+        <input
+            type="text"
+            id="paymentReference"
+            name="payment_reference"
+            placeholder="Enter your Moniepoint transfer reference"
+            autocomplete="off"
+        >
+    </label>
+</div>
+                        <button
+                            class="btn btn-primary full"
+                            type="submit"
+                        >
+                            Place Order
+                        </button>
+
+                    </form>
+
+
+                    <!-- SUCCESS MESSAGE -->
+                    <div
+                        id="successBox"
+                        class="hidden"
+                    ></div>
+
+                </div>
+
+
+                <!-- ORDER SUMMARY -->
+                <aside
+                    id="checkoutSummary"
+                    class="checkout-summary"
+                >
+
+                    <div class="empty">
+
+                        <h3>Loading order...</h3>
+
+                        <p>
+                            Please wait while we load your cart.
+                        </p>
+
+                    </div>
+
+                </aside>
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <!-- FOOTER -->
+    <footer class="footer">
+
+        <div class="container">
+
+            <p>
+                © 2026 SHOPPING DAVID. All rights reserved.
+            </p>
+
+        </div>
+
+    </footer>
+
+
+    <!-- MAIN APP JAVASCRIPT -->
+    <script src="/SHOPPING%20DAVID/js/app.js"></script>
+
+
+    <!-- CHECKOUT JAVASCRIPT -->
+    <script>
+
+    document.addEventListener("DOMContentLoaded", async function () {
+
+        const summary =
+            document.getElementById("checkoutSummary");
+
+        const form =
+            document.getElementById("checkoutForm");
+
+        const success =
+            document.getElementById("successBox");
+
+
+        /*
+         * LOAD CART AND CALCULATE TOTAL
+         */
+        try {
+
+            // Get the same cart used on the Cart page
+            const cart = JSON.parse(
+                localStorage.getItem("shoppingDavidCart") || "[]"
+            );
+
+
+            // Check whether cart is empty
+            if (
+                !Array.isArray(cart) ||
+                cart.length === 0
+            ) {
+
+                summary.innerHTML = `
+
+                    <div class="empty">
+
+                        <h3>Your cart is empty</h3>
+
+                        <p>
+                            Please return to the shop
+                            and add a product.
+                        </p>
+
+                        <a
+                            class="btn btn-primary"
+                            href="shop.html"
+                        >
+                            Continue Shopping
+                        </a>
+
+                    </div>
+
+                `;
+
+                return;
+            }
+
+
+            // Get products from PHP/MySQL
+            const response = await fetch(
+                "/SHOPPING%20DAVID/api/products.php",
+                {
+                    cache: "no-store"
+                }
+            );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Unable to load products. HTTP " +
+                    response.status
+                );
+
+            }
+
+
+            const products =
+                await response.json();
+
+
+            if (!Array.isArray(products)) {
+
+                throw new Error(
+                    "Invalid product data received."
+                );
+
+            }
+
+
+            let total = 0;
+
+            let itemsHTML = "";
+
+
+            /*
+             * MATCH CART ITEMS WITH DATABASE PRODUCTS
+             */
+            cart.forEach(function (cartItem) {
+
+                const product =
+                    products.find(function (p) {
+
+                        return Number(p.id) ===
+                               Number(cartItem.id);
+
+                    });
+
+
+                if (!product) {
+                    return;
+                }
+
+
+                const quantity =
+                    Number(cartItem.qty) || 1;
+
+
+                const price =
+                    Number(product.price) || 0;
+
+
+                const itemTotal =
+                    price * quantity;
+
+
+                total += itemTotal;
+
+
+                itemsHTML += `
+
+                    <div class="summary-line">
+
+                        <span>
+                            ${product.name}
+                            × ${quantity}
+                        </span>
+
+                        <strong>
+                            ₦${itemTotal.toLocaleString("en-NG")}
+                        </strong>
+
+                    </div>
+
+                `;
+
+            });
+
+
+            /*
+             * MAKE SURE TOTAL IS VALID
+             */
+            if (total <= 0) {
+
+                throw new Error(
+                    "The checkout total could not be calculated."
+                );
+
+            }
+
+
+            /*
+             * DISPLAY ORDER SUMMARY
+             */
+            summary.innerHTML = `
+
+                <h2>Order Summary</h2>
+
+                ${itemsHTML}
+
+                <hr>
+
+                <div class="summary-line">
+
+                    <span>
+                        Delivery
+                    </span>
+
+                    <span>
+                        Calculated at checkout
+                    </span>
+
+                </div>
+
+                <div class="summary-total">
+
+                    <span>
+                        Total
+                    </span>
+
+                    <strong>
+                        ₦${total.toLocaleString("en-NG")}
+                    </strong>
+
+                </div>
+
+            `;
+
+
+            /*
+             * PLACE ORDER
+             */
+            const moniepointBox =
+            document.getElementById("moniepointBox");
+
+        const paymentReference =
+            document.getElementById("paymentReference");
+
+        function updatePaymentDisplay() {
+
+            const selectedPayment =
+                document.querySelector(
+                    'input[name="payment"]:checked'
+                );
+
+            if (
+                selectedPayment &&
+                selectedPayment.value === "moniepoint_transfer"
+            ) {
+
+                moniepointBox.style.display = "block";
+                paymentReference.required = true;
+
+            } else {
+
+                moniepointBox.style.display = "none";
+                paymentReference.required = false;
+                paymentReference.value = "";
+
+            }
+        }
+
+        document
+            .querySelectorAll('input[name="payment"]')
+            .forEach(function (radio) {
+
+                radio.addEventListener(
+                    "change",
+                    updatePaymentDisplay
+                );
+
+            });
+
+        updatePaymentDisplay();
+
+
+        form.addEventListener(
+                "submit",
+                async function (event) {
+
+                    event.preventDefault();
+
+
+                    const formData =
+                        new FormData(form);
+
+
+                    const orderItems =
+                        [];
+
+
+                    cart.forEach(function (cartItem) {
+
+                        const product =
+                            products.find(function (p) {
+
+                                return Number(p.id) ===
+                                       Number(cartItem.id);
+
+                            });
+
+
+                        if (!product) {
+                            return;
+                        }
+
+
+                        orderItems.push({
+
+                            id: Number(product.id),
+
+                            name: product.name,
+
+                            price: Number(product.price),
+
+                            quantity:
+                                Number(cartItem.qty) || 1
+
+                        });
+
+                    });
+
+
+                    const orderData = {
+
+                        customer_name:
+                            formData.get("name"),
+
+                        email:
+                            formData.get("email"),
+
+                        phone:
+                            formData.get("phone"),
+
+                        address:
+                            formData.get("city") +
+                            ", " +
+                            formData.get("address"),
+
+                        items:
+                            orderItems
+
+                    };
+
+try {
+
+    const paymentMethod =
+        formData.get("payment");
+
+
+    /*
+     * MONIEPOINT BANK TRANSFER
+     */
+
+    if (paymentMethod === "moniepoint_transfer") {
+
+        const paymentReference =
+            String(formData.get("payment_reference") || "").trim();
+
+        if (!paymentReference) {
+            throw new Error(
+                "Please enter your Moniepoint transfer reference."
+            );
+        }
+
+        /*
+         * Send the order to the existing orders API.
+         * The extra payment fields are included for future backend
+         * payment-status handling.
+         */
+
+        orderData.payment_method = "moniepoint_transfer";
+        orderData.payment_reference = paymentReference;
+        orderData.payment_status = "pending_verification";
+
+        const orderResponse =
+            await fetch(
+                "/SHOPPING%20DAVID/api/orders.php",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(orderData)
+                }
+            );
+
+
+        const result =
+            await orderResponse.json();
+
+
+        if (
+            !orderResponse.ok ||
+            !result.success
+        ) {
+
+            throw new Error(
+                result.message ||
+                "Unable to place transfer order."
+            );
+
+        }
+
+
+        /*
+         * SHOW SUCCESS MESSAGE
+         */
+
+        form.style.display = "none";
+
+        summary.style.display = "none";
+
+        success.classList.remove(
+            "hidden"
+        );
+
+
+        success.innerHTML = `
+
+            <div class="empty">
+
+                <h2>
+                    Transfer Order Received!
+                </h2>
+
+                <p>
+                    Thank you for shopping
+                    with SHOPPING DAVID.
+                </p>
+
+                <p>
+                    Your order number is:
+                    <strong>
+                        #${result.order_id}
+                    </strong>
+                </p>
+
+                <p>
+                    Total:
+                    <strong>
+                        ₦${Number(
+                            result.total
+                        ).toLocaleString(
+                            "en-NG"
+                        )}
+                    </strong>
+                </p>
+
+                <p>
+                    Payment reference:
+                    <strong>
+                        ${paymentReference}
+                    </strong>
+                </p>
+
+                <p>
+                    Your transfer will be verified manually.
+                    Please keep your transfer receipt/reference.
+                </p>
+
+                <a
+                    class="btn btn-primary"
+                    href="shop.html"
+                >
+                    Continue Shopping
+                </a>
+
+            </div>
+
+        `;
+
+
+        localStorage.removeItem(
+            "shoppingDavidCart"
+        );
+
+
+        if (
+            typeof updateCartCount ===
+            "function"
+        ) {
+
+            updateCartCount();
+
+        }
+
+        return;
+    }
+
+
+
+        const result =
+            await orderResponse.json();
+
+
+        if (
+            !orderResponse.ok ||
+            !result.success
+        ) {
+
+            throw new Error(
+                result.message ||
+                "Unable to place order."
+            );
+
+        }
+
+
+        /*
+         * SHOW SUCCESS MESSAGE
+         */
+
+        form.style.display = "none";
+
+        summary.style.display = "none";
+
+        success.classList.remove(
+            "hidden"
+        );
+
+
+        success.innerHTML = `
+
+            <div class="empty">
+
+                <h2>
+                    Order placed successfully!
+                </h2>
+
+                <p>
+                    Thank you for shopping
+                    with SHOPPING DAVID.
+                </p>
+
+                <p>
+                    Your order number is:
+                    <strong>
+                        #${result.order_id}
+                    </strong>
+                </p>
+
+                <p>
+                    Total:
+                    <strong>
+                        ₦${Number(
+                            result.total
+                        ).toLocaleString(
+                            "en-NG"
+                        )}
+                    </strong>
+                </p>
+
+                <a
+                    class="btn btn-primary"
+                    href="shop.html"
+                >
+                    Continue Shopping
+                </a>
+
+            </div>
+
+        `;
+
+
+        localStorage.removeItem(
+            "shoppingDavidCart"
+        );
+
+
+        if (
+            typeof updateCartCount ===
+            "function"
+        ) {
+
+            updateCartCount();
+
+        }
+
+        return;
+    }
+
+
+    throw new Error(
+        "Please select a payment method."
+    );
+
+
+} catch (error) {
+
+    alert(
+        "Order could not be completed: " +
+        error.message
+    );
+
+}
+
+                }
+            );
+
+
+        } catch (error) {
+
+            summary.innerHTML = `
+
+                <div class="empty">
+
+                    <h3>
+                        Unable to load order summary
+                    </h3>
+
+                    <p>
+                        ${error.message}
+                    </p>
+
+                    <a
+                        class="btn btn-primary"
+                        href="cart.html"
+                    >
+                        Return to Cart
+                    </a>
+
+                </div>
+
+            `;
+
+        }
+
+    });
+
+    </script>
+
+</body>
+</html>
+

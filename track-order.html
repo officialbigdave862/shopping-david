@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>
+    Track Order | SHOPPING DAVID
+</title>
+
+<link
+    rel="stylesheet"
+    href="css/style.css"
+>
+
+<style>
+
+    .tracking-page {
+        max-width: 900px;
+        margin: 50px auto;
+        padding: 0 20px;
+    }
+
+    .tracking-header {
+        text-align: center;
+        margin-bottom: 35px;
+    }
+
+    .tracking-header h1 {
+        font-size: 36px;
+        margin-bottom: 10px;
+    }
+
+    .tracking-header p {
+        color: #777;
+    }
+
+    .tracking-form {
+        background: #fff;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow:
+            0 5px 25px rgba(0,0,0,0.08);
+        display: flex;
+        gap: 12px;
+        margin-bottom: 30px;
+    }
+
+    .tracking-form input {
+        flex: 1;
+        padding: 14px 16px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        outline: none;
+    }
+
+    .tracking-form input:focus {
+        border-color: #111;
+    }
+
+    .tracking-form button {
+        border: none;
+        background: #111;
+        color: #fff;
+        padding: 14px 25px;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .tracking-form button:hover {
+        opacity: .85;
+    }
+
+    .tracking-message {
+        display: none;
+        padding: 16px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        font-weight: 600;
+    }
+
+    .tracking-message.show {
+        display: block;
+    }
+
+    .tracking-message.error {
+        background: #ffe7e7;
+        color: #b00020;
+    }
+
+    .tracking-message.success {
+        background: #e8f8ee;
+        color: #16733a;
+    }
+
+    .order-result {
+        display: none;
+    }
+
+    .order-result.show {
+        display: block;
+    }
+
+    .order-card {
+        background: #fff;
+        border-radius: 15px;
+        box-shadow:
+            0 5px 25px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .order-top {
+        padding: 25px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .order-number {
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .order-date {
+        color: #777;
+        margin-top: 6px;
+        font-size: 14px;
+    }
+
+    .current-status {
+        padding: 9px 15px;
+        border-radius: 30px;
+        background: #111;
+        color: #fff;
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    /* STATUS TRACKER */
+
+    .status-tracker {
+        padding: 35px 25px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .status-track {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+    }
+
+    .status-track::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 18px;
+        height: 4px;
+        background: #ddd;
+        z-index: 0;
+    }
+
+    .status-progress {
+        position: absolute;
+        left: 0;
+        top: 18px;
+        height: 4px;
+        background: #111;
+        z-index: 1;
+        transition: width .4s ease;
+    }
+
+    .status-step {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        width: 25%;
+    }
+
+    .status-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #ddd;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: #777;
+    }
+
+    .status-step.active .status-circle {
+        background: #111;
+        color: #fff;
+    }
+
+    .status-step.completed .status-circle {
+        background: #111;
+        color: #fff;
+    }
+
+    .status-label {
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    /* CUSTOMER */
+
+    .order-section {
+        padding: 25px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .order-section h2 {
+        font-size: 20px;
+        margin-bottom: 18px;
+    }
+
+    .customer-details {
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 15px;
+    }
+
+    .detail-box {
+        background: #f7f7f7;
+        padding: 15px;
+        border-radius: 9px;
+    }
+
+    .detail-box strong {
+        display: block;
+        font-size: 12px;
+        color: #777;
+        margin-bottom: 5px;
+    }
+
+    .detail-box span {
+        font-weight: 600;
+        word-break: break-word;
+    }
+
+    /* ITEMS */
+
+    .order-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 15px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .order-item:last-child {
+        border-bottom: none;
+    }
+
+    .item-name {
+        font-weight: 700;
+    }
+
+    .item-quantity {
+        color: #777;
+        font-size: 14px;
+        margin-top: 4px;
+    }
+
+    .item-price {
+        text-align: right;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .order-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 22px 25px;
+        background: #f7f7f7;
+        font-size: 20px;
+        font-weight: 800;
+    }
+
+    .cancelled-status {
+        background: #ffe7e7;
+        color: #b00020;
+        padding: 20px;
+        margin: 25px;
+        border-radius: 10px;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 30px;
+        color: #777;
+    }
+
+    @media (max-width: 650px) {
+
+        .tracking-page {
+            margin: 30px auto;
+        }
+
+        .tracking-header h1 {
+            font-size: 28px;
+        }
+
+        .tracking-form {
+            display: block;
+        }
+
+        .tracking-form button {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .order-top {
+            display: block;
+        }
+
+        .current-status {
+            display: inline-block;
+            margin-top: 15px;
+        }
+
+        .status-label {
+            font-size: 10px;
+        }
+
+        .status-circle {
+            width: 30px;
+            height: 30px;
+            font-size: 12px;
+        }
+
+        .status-track::before,
+        .status-progress {
+            top: 15px;
+        }
+
+        .customer-details {
+            grid-template-columns: 1fr;
+        }
+
+        .order-item {
+            display: block;
+        }
+
+        .item-price {
+            text-align: left;
+            margin-top: 7px;
+        }
+
+    }
+    .order-notification {
+    margin: 20px 0;
+    padding: 15px 18px;
+    border-radius: 10px;
+    background: #f3f4f6;
+    color: #333;
+    font-weight: 500;
+    border-left: 4px solid #666;
+}
+
+.order-notification.pending {
+    background: #fff7ed;
+    color: #9a3412;
+    border-left-color: #f97316;
+}
+
+.order-notification.processing {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-left-color: #3b82f6;
+}
+
+.order-notification.shipped {
+    background: #f5f3ff;
+    color: #6d28d9;
+    border-left-color: #8b5cf6;
+}
+
+.order-notification.delivered {
+    background: #ecfdf5;
+    color: #047857;
+    border-left-color: #10b981;
+}
+
+.order-notification.cancelled {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-left-color: #ef4444;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- HEADER -->
+
+<header class="header">
+
+    <div class="container">
+
+        <a
+            href="index.html"
+            class="logo"
+        >
+            SHOPPING DAVID
+        </a>
+
+        <nav class="nav">
+
+            <a href="index.html">
+                Home
+            </a>
+
+            <a href="shop.html">
+                Shop
+            </a>
+
+            <a href="about.html">
+                About
+            </a>
+
+            <a href="contact.html">
+                Contact
+            </a>
+
+            <a
+                href="cart.html"
+                class="cart-link"
+            >
+                Cart
+                <span class="cart-count">
+                    0
+                </span>
+            </a>
+
+        </nav>
+
+        <button
+            class="menu-toggle"
+            type="button"
+        >
+            ☰
+        </button>
+
+    </div>
+
+</header>
+
+
+<!-- TRACKING PAGE -->
+
+<main class="tracking-page">
+
+    <div class="tracking-header">
+
+        <h1>
+            Track Your Order
+        </h1>
+
+        <p>
+            Enter your order number to see
+            your order status and details.
+        </p>
+
+    </div>
+
+
+    <form
+        id="trackingForm"
+        class="tracking-form"
+    >
+
+        <input
+            type="number"
+            id="orderNumber"
+            placeholder="Enter order number e.g. 1001"
+            min="1"
+            required
+        >
+
+        <button type="submit">
+            Track Order
+        </button>
+
+    </form>
+
+
+    <div
+        id="trackingMessage"
+        class="tracking-message"
+    ></div>
+
+
+    <div
+        id="orderResult"
+        class="order-result"
+    >
+
+        <div class="order-card">
+
+            <div class="order-top">
+
+                <div>
+
+                    <div
+                        id="displayOrderNumber"
+                        class="order-number"
+                    ></div>
+
+                    <div
+                        id="displayOrderDate"
+                        class="order-date"
+                    ></div>
+
+                </div>
+
+                <span
+                    id="currentStatus"
+                    class="current-status"
+                ></span>
+                <div id="orderNotification" class="order-notification"></div>
+
+            </div>
+
+
+            <!-- STATUS -->
+
+            <div
+                id="statusTracker"
+                class="status-tracker"
+            >
+
+                <div class="status-track">
+
+                    <div
+                        id="statusProgress"
+                        class="status-progress"
+                    ></div>
+
+                    <div
+                        class="status-step"
+                        data-status="Pending"
+                    >
+
+                        <div class="status-circle">
+                            1
+                        </div>
+
+                        <div class="status-label">
+                            Pending
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        class="status-step"
+                        data-status="Processing"
+                    >
+
+                        <div class="status-circle">
+                            2
+                        </div>
+
+                        <div class="status-label">
+                            Processing
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        class="status-step"
+                        data-status="Shipped"
+                    >
+
+                        <div class="status-circle">
+                            3
+                        </div>
+
+                        <div class="status-label">
+                            Shipped
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        class="status-step"
+                        data-status="Delivered"
+                    >
+
+                        <div class="status-circle">
+                            4
+                        </div>
+
+                        <div class="status-label">
+                            Delivered
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- CUSTOMER DETAILS -->
+
+            <div class="order-section">
+
+                <h2>
+                    Delivery Information
+                </h2>
+
+                <div class="customer-details">
+
+                    <div class="detail-box">
+
+                        <strong>
+                            CUSTOMER
+                        </strong>
+
+                        <span
+                            id="customerName"
+                        ></span>
+
+                    </div>
+
+                    <div class="detail-box">
+
+                        <strong>
+                            EMAIL
+                        </strong>
+
+                        <span
+                            id="customerEmail"
+                        ></span>
+
+                    </div>
+
+                    <div class="detail-box">
+
+                        <strong>
+                            PHONE
+                        </strong>
+
+                        <span
+                            id="customerPhone"
+                        ></span>
+
+                    </div>
+
+                    <div class="detail-box">
+
+                        <strong>
+                            DELIVERY ADDRESS
+                        </strong>
+
+                        <span
+                            id="customerAddress"
+                        ></span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ORDER ITEMS -->
+
+            <div class="order-section">
+
+                <h2>
+                    Order Details
+                </h2>
+
+                <div
+                    id="orderItems"
+                ></div>
+
+            </div>
+
+
+            <!-- TOTAL -->
+
+            <div class="order-total">
+
+                <span>
+                    Total
+                </span>
+
+                <span
+                    id="orderTotal"
+                ></span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</main>
+
+
+<script src="js/app.js"></script>
+
+<script src="js/track-order.js"></script>
+
+</body>
+
+</html>
