@@ -10,7 +10,7 @@
 body{margin:0;background:var(--admin-bg);color:var(--admin-ink);font-family:Inter,Arial,sans-serif}
 .admin-wrap{max-width:1200px;margin:0 auto;padding:24px}
 .admin-top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:24px}
-.admin-brand{font-size:22px;font-weight:800}.admin-brand span{color:var(--admin-gold)}
+.admin-brand{font-size:22px;font-weight:800;display:flex;align-items:center;gap:12px}.admin-brand span{color:var(--admin-gold)}.admin-logo{width:58px;height:58px;object-fit:contain;border-radius:8px}.admin-logo-small{width:46px;height:46px;object-fit:contain;border-radius:8px}
 .admin-btn{border:0;border-radius:8px;background:var(--admin-ink);color:#fff;padding:11px 15px;cursor:pointer;font-weight:700}
 .admin-btn.gold{background:var(--admin-gold)}.admin-btn.danger{background:#b42318}.admin-btn.light{background:#e8ebf1;color:var(--admin-ink)}
 .admin-panel{background:#fff;border-radius:14px;padding:20px;margin-bottom:20px;box-shadow:0 4px 18px #1720330c}
@@ -31,7 +31,7 @@ body{margin:0;background:var(--admin-bg);color:var(--admin-ink);font-family:Inte
 <body>
 <div class="admin-wrap">
   <section id="loginView" class="admin-panel admin-login">
-    <div class="admin-brand"><span>SD</span> SHOPPING DAVID</div>
+    <div class="admin-brand"><img class="admin-logo" src="../images/bigdavebig7-logo.png" alt="SHOPPING DAVID logo"> SHOPPING DAVID</div>
     <h1>Admin sign in</h1>
     <p class="muted">Store owner access only. Customers should use the customer login page.</p>
     <form id="loginForm" class="admin-form">
@@ -44,7 +44,7 @@ body{margin:0;background:var(--admin-bg);color:var(--admin-ink);font-family:Inte
 
   <section id="dashboardView" class="hidden">
     <header class="admin-top">
-      <div><div class="admin-brand"><span>SD</span> SHOPPING DAVID ADMIN</div><p class="muted">Manage products, orders, stock and transfer verification.</p></div>
+      <div><div class="admin-brand"><img class="admin-logo-small" src="../images/bigdavebig7-logo.png" alt="SHOPPING DAVID logo"> SHOPPING DAVID ADMIN</div><p class="muted">Manage products, orders, stock and transfer verification.</p></div>
       <div><span id="signedInEmail" class="muted"></span> <button id="logoutBtn" class="admin-btn light">Log out</button></div>
     </header>
     <div id="pageMessage" role="status"></div>
