@@ -328,7 +328,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             address: String(formData.get("city") || "").trim() + ", " +
               String(formData.get("address") || "").trim()
           },
-          items: cart
+          items: cart,
+          payment_method: "moniepoint_transfer",
+          payment_reference: reference
         };
 
         const orderResponse = await fetch("/api/orders", {
