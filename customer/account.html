@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Account | SHOPPING DAVID</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .account-page{max-width:1050px;width:calc(100% - 32px);margin:38px auto 60px}
+    .account-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+    .account-panel{background:#fff;border:1px solid #e7e9ee;border-radius:16px;padding:24px;margin-bottom:22px;box-shadow:0 8px 28px rgba(20,30,50,.05)}
+    .profile-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .profile-item{background:#f7f8fa;padding:14px;border-radius:10px;overflow-wrap:anywhere}
+    .profile-item span{display:block;color:#667085;font-size:13px;margin-bottom:5px}
+    .orders-list{display:grid;gap:14px}
+    .order-card{border:1px solid #e5e7eb;border-radius:12px;padding:18px}
+    .order-top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+    .status{display:inline-block;background:#fff4d6;color:#805b00;padding:5px 10px;border-radius:30px;font-size:13px;font-weight:700}
+    .order-items{color:#475467;line-height:1.7;margin:10px 0}
+    .account-message{padding:16px;background:#f7f8fa;border-radius:10px;color:#475467}
+    .logout-btn{border:1px solid #d0d5dd;background:white;padding:10px 15px;border-radius:8px;cursor:pointer;font:inherit}
+    @media(max-width:600px){.profile-details{grid-template-columns:1fr}.account-panel{padding:17px}.account-page{margin-top:22px}}
+  </style>
+</head>
+<body>
+  <div class="topbar">SHOPPING DAVID • Your everyday online store</div>
+  <header class="header">
+    <a href="../index.html" class="logo">SHOPPING DAVID</a>
+    <nav class="nav">
+      <a href="../index.html">Home</a>
+      <a href="../shop.html">Shop</a>
+      <a href="../cart.html">Cart</a>
+    </nav>
+  </header>
+
+  <main class="account-page">
+    <div class="account-heading">
+      <div><p class="eyebrow">CUSTOMER AREA</p><h1>My Account</h1><p class="muted">Manage your details and view your SHOPPING DAVID orders.</p></div>
+      <button id="logoutButton" class="logout-btn" type="button">Log Out</button>
+    </div>
+
+    <section class="account-panel">
+      <h2>Account details</h2>
+      <div id="profile" class="account-message">Loading your account…</div>
+    </section>
+
+    <section class="account-panel">
+      <h2>My Orders</h2>
+      <div id="orders" class="account-message">Loading your orders…</div>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="container"><p>© 2026 SHOPPING DAVID. All rights reserved.</p></div></footer>
+
+  <script>
+  (function(){
+    const profile=document.getElementById("profile");
+    const ordersBox=document.getElementById("orders");
+    const logoutButton=document.getElementById("logoutButton");
+    const escapeHTML=value=>String(value==null?"":value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+    const money=value=>"₦"+Number(value||0).toLocaleString("en-NG");
+
+    async function loadAccount(){
+      try{
+        const response=await fetch("/api/customer/me",{credentials:"same-origin"});
+        if(!response.ok){window.location.replace("login.php");return;}
+        const data=await response.json();
+        const customer=data.customer||{};
+        profile.className="";
+        profile.innerHTML='<div class="profile-details"><div class="profile-item"><span>Full name</span><strong>'+escapeHTML(customer.name)+'</strong></div><div class="profile-item"><span>Email address</span><strong>'+escapeHTML(customer.email)+'</strong></div></div>';
+
+        const ordersResponse=await fetch("/api/customer/orders",{credentials:"same-origin"});
+        if(!ordersResponse.ok)throw new Error("Could not load your orders.");
+        const customerOrders=await ordersResponse.json();
+        if(!Array.isArray(customerOrders)||customerOrders.length===0){
+          ordersBox.innerHTML='<p>You have not placed any orders yet.</p><a class="btn btn-primary" href="../shop.html">Start Shopping</a>';
+          return;
+        }
+        ordersBox.className="orders-list";
+        ordersBox.innerHTML=customerOrders.map(order=>{
+          const itemLines=(order.items||[]).map(item=>escapeHTML(item.product_name)+" × "+Number(item.quantity||1)).join("<br>");
+          const status=String(order.status||"Pending");
+          const paymentStatus=String(order.payment_status||"pending_verification").replace(/_/g," ");
+          return '<article class="order-card"><div class="order-top"><div><strong>Order '+escapeHTML(order.order_no||order.id)+'</strong><div class="muted">'+escapeHTML(order.created_at||"")+'</div></div><span class="status">'+escapeHTML(status)+'</span></div><div class="order-items">'+(itemLines||"Order items")+'</div><p><strong>Total: '+money(order.total)+'</strong></p><p>Payment: Moniepoint transfer — '+escapeHTML(paymentStatus)+'</p><p>Transfer reference: <strong>'+escapeHTML(order.payment_reference||"Not provided")+'</strong></p></article>';
+        }).join("");
+      }catch(error){
+        profile.textContent="Unable to load your account. Please refresh the page.";
+        ordersBox.textContent="Unable to load orders right now.";
+      }
+    }
+
+    logoutButton.addEventListener("click",async function(){
+      logoutButton.disabled=true;
+      try{
+        await fetch("/api/customer/logout",{method:"POST",credentials:"same-origin"});
+      }finally{
+        window.location.replace("login.php");
+      }
+    });
+    loadAccount();
+  })();
+  </script>
+</body>
+</html>
