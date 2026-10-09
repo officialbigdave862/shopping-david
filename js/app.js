@@ -54,9 +54,11 @@
     }
   };
 
+  let processingPendingAdd = false;
   async function processPendingAdd() {
     const pendingId = sessionStorage.getItem("shoppingDavidPendingAdd");
-    if (!pendingId) return;
+    if (!pendingId || processingPendingAdd) return;
+    processingPendingAdd = true;
     try {
       const response = await fetch("/api/customer/me", { credentials: "same-origin", cache: "no-store" });
       const data = response.ok ? await response.json() : null;
@@ -65,6 +67,7 @@
       sessionStorage.removeItem("shoppingDavidPendingAdd");
       addProductToCart(pendingId);
     } catch (_) {}
+    finally { processingPendingAdd = false; }
   }
 
   window.renderShoppingDavidProduct = function (product) {
