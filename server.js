@@ -164,6 +164,49 @@ app.get("/api/admin/stats", adminOnly, (req, res) => {
   res.json({ products, orders, pending, revenue, lowStock });
 });
 
+
+app.post("/api/customer/register", async (req, res) => {
+  const name = String(req.body.name || "").trim();
+  const email = String(req.body.email || "").trim().toLowerCase();
+  const password = String(req.body.password || "");
+  if (!name || !email || password.length < 8) {
+    return res.status(400).json({ error: "Enter your name, a valid email, and a password of at least 8 characters." });
+  }
+  try {
+    const hash = await bcrypt.hash(password, 12);
+    const result = db.prepare("INSERT INTO customers (name, email, password_hash) VALUES (?, ?, ?)").run(name, email, hash);
+    req.session.customer = { id: result.lastInsertRowid, name, email };
+    res.status(201).json({ message: "Account created successfully.", customer: req.session.customer });
+  } catch (err) {
+    if (String(err.message).includes("UNIQUE")) return res.status(409).json({ error: "An account with this email already exists. Please log in." });
+    res.status(500).json({ error: "Could not create your account right now." });
+  }
+});
+
+app.post("/api/customer/login", async (req, res) => {
+  const email = String(req.body.email || "").trim().toLowerCase();
+  const password = String(req.body.password || "");
+  const customer = db.prepare("SELECT * FROM customers WHERE email = ?").get(email);
+  if (!customer || !(await bcrypt.compare(password, customer.password_hash))) {
+    return res.status(401).json({ error: "Email or password is incorrect." });
+  }
+  req.session.customer = { id: customer.id, name: customer.name, email: customer.email };
+  res.json({ message: "Login successful.", customer: req.session.customer });
+});
+
+app.get("/api/customer/me", (req, res) => {
+  if (!req.session.customer) return res.status(401).json({ authenticated: false });
+  res.json({ authenticated: true, customer: req.session.customer });
+});
+
+app.post("/api/customer/logout", (req, res) => {
+  delete req.session.customer;
+  req.session.save(err => {
+    if (err) return res.status(500).json({ error: "Could not log out." });
+    res.json({ message: "Logged out successfully." });
+  });
+});
+
 app.use(express.static(__dirname));
 
 app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "admin", "index.html")));
