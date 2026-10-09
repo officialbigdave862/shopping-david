@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SHOPPING DAVID | Admin</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+:root{--admin-ink:#172033;--admin-gold:#b8892f;--admin-bg:#f4f6fa}
+body{margin:0;background:var(--admin-bg);color:var(--admin-ink);font-family:Inter,Arial,sans-serif}
+.admin-wrap{max-width:1200px;margin:0 auto;padding:24px}
+.admin-top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:24px}
+.admin-brand{font-size:22px;font-weight:800}.admin-brand span{color:var(--admin-gold)}
+.admin-btn{border:0;border-radius:8px;background:var(--admin-ink);color:#fff;padding:11px 15px;cursor:pointer;font-weight:700}
+.admin-btn.gold{background:var(--admin-gold)}.admin-btn.danger{background:#b42318}.admin-btn.light{background:#e8ebf1;color:var(--admin-ink)}
+.admin-panel{background:#fff;border-radius:14px;padding:20px;margin-bottom:20px;box-shadow:0 4px 18px #1720330c}
+.admin-login{max-width:430px;margin:8vh auto}.admin-login h1{margin-top:0}
+.admin-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.admin-form .full{grid-column:1/-1}.admin-form label{display:block;font-size:13px;font-weight:700;margin-bottom:5px}
+.admin-form input,.admin-form select,.admin-form textarea,.admin-control{width:100%;box-sizing:border-box;padding:11px;border:1px solid #d7dce5;border-radius:8px;background:#fff;color:#172033}
+.admin-form textarea{min-height:75px;resize:vertical}
+.admin-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.stat{background:#fff;border-radius:12px;padding:16px;box-shadow:0 4px 18px #1720330c}.stat small{color:#657084}.stat strong{display:block;font-size:24px;margin-top:8px;overflow-wrap:anywhere}
+.admin-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.admin-tabs button.active{background:var(--admin-gold)}
+.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:750px}th,td{text-align:left;padding:12px 10px;border-bottom:1px solid #edf0f4;vertical-align:top;font-size:13px}th{background:#f8f9fb}
+.admin-product-img{width:54px;height:54px;object-fit:cover;border-radius:8px}
+.order-items{min-width:170px}.muted{color:#657084;font-size:13px}.error{color:#b42318;margin:10px 0}.success{color:#167647;margin:10px 0}.hidden{display:none!important}
+@media(max-width:800px){.admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-wrap{padding:14px}.admin-form{grid-template-columns:1fr}.admin-form .full{grid-column:auto}}
+</style>
+</head>
+<body>
+<div class="admin-wrap">
+  <section id="loginView" class="admin-panel admin-login">
+    <div class="admin-brand"><span>SD</span> SHOPPING DAVID</div>
+    <h1>Admin sign in</h1>
+    <p class="muted">Store owner access only. Customers should use the customer login page.</p>
+    <form id="loginForm" class="admin-form">
+      <div class="full"><label for="adminEmail">Admin email</label><input id="adminEmail" type="email" autocomplete="username" required value="admin@shoppingdavid.com"></div>
+      <div class="full"><label for="adminPassword">Password</label><input id="adminPassword" type="password" autocomplete="current-password" required placeholder="Enter admin password"></div>
+      <div class="full"><button class="admin-btn gold" type="submit">Sign in to dashboard</button></div>
+    </form>
+    <p id="loginMessage" class="error" role="status"></p>
+  </section>
+
+  <section id="dashboardView" class="hidden">
+    <header class="admin-top">
+      <div><div class="admin-brand"><span>SD</span> SHOPPING DAVID ADMIN</div><p class="muted">Manage products, orders, stock and transfer verification.</p></div>
+      <div><span id="signedInEmail" class="muted"></span> <button id="logoutBtn" class="admin-btn light">Log out</button></div>
+    </header>
+    <div id="pageMessage" role="status"></div>
+    <div class="admin-stats">
+      <div class="stat"><small>Products</small><strong id="statProducts">—</strong></div>
+      <div class="stat"><small>Total orders</small><strong id="statOrders">—</strong></div>
+      <div class="stat"><small>Pending orders</small><strong id="statPending">—</strong></div>
+      <div class="stat"><small>Order value*</small><strong id="statRevenue">—</strong></div>
+      <div class="stat"><small>Low stock (5 or less)</small><strong id="statLowStock">—</strong></div>
+    </div>
+    <div class="admin-tabs">
+      <button class="admin-btn active" data-tab="orders">Orders & payments</button>
+      <button class="admin-btn light" data-tab="products">Products & stock</button>
+    </div>
+    <section id="ordersTab" class="admin-panel">
+      <div class="admin-top"><div><h2>Orders and Moniepoint transfers</h2><p class="muted">Confirm money in your Moniepoint account before setting a transfer to Paid.</p></div><button class="admin-btn light" id="refreshOrders">Refresh</button></div>
+      <div class="table-wrap"><table><thead><tr><th>Order / customer</th><th>Items</th><th>Total</th><th>Transfer reference</th><th>Payment</th><th>Order status</th></tr></thead><tbody id="ordersBody"><tr><td colspan="6">Loading orders…</td></tr></tbody></table></div>
+    </section>
+    <section id="productsTab" class="admin-panel hidden">
+      <h2 id="productFormTitle">Add a product</h2>
+      <form id="productForm" class="admin-form">
+        <input type="hidden" id="productId">
+        <div><label for="productName">Product name</label><input id="productName" required></div>
+        <div><label for="productCategory">Category</label><select id="productCategory" required><option value="fashion">Clothes & Fashion</option><option value="beverages">Beverages</option><option value="gadgets">Gadgets</option><option value="daily-needs">Daily Needs</option></select></div>
+        <div><label for="productPrice">Price (₦)</label><input id="productPrice" type="number" min="1" step="1" required></div>
+        <div><label for="productStock">Stock quantity</label><input id="productStock" type="number" min="0" step="1" value="0" required></div>
+        <div class="full"><label for="productImage">Image URL</label><input id="productImage" type="url" placeholder="https://..." required></div>
+        <div class="full"><label for="productDescription">Description</label><textarea id="productDescription"></textarea></div>
+        <div class="full"><button class="admin-btn gold" type="submit" id="saveProductBtn">Save product</button> <button class="admin-btn light hidden" type="button" id="cancelEditBtn">Cancel edit</button></div>
+      </form>
+      <hr style="border:0;border-top:1px solid #edf0f4;margin:22px 0">
+      <h2>Current products</h2>
+      <div class="table-wrap"><table><thead><tr><th>Image</th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody id="productsBody"><tr><td colspan="6">Loading products…</td></tr></tbody></table></div>
+    </section>
+    <p class="muted">*Order value includes orders that are not cancelled; it is not confirmed profit or verified payments.</p>
+  </section>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const money = n => '₦' + Number(n || 0).toLocaleString('en-NG');
+const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(url, options={}) {
+  const response = await fetch(url, {credentials:'same-origin', ...options, headers:{'Content-Type':'application/json', ...(options.headers||{})}});
+  let data={}; try { data=await response.json(); } catch {}
+  if(!response.ok) throw new Error(data.error || data.message || 'Request failed. Please try again.');
+  return data;
+}
+function showMessage(message, ok=false) { $('pageMessage').className=ok?'success':'error'; $('pageMessage').textContent=message; }
+async function checkAdmin() {
+  try { const data=await api('/api/admin/me'); $('loginView').classList.add('hidden'); $('dashboardView').classList.remove('hidden'); $('signedInEmail').textContent=data.admin.email; await loadAll(); }
+  catch { $('loginView').classList.remove('hidden'); $('dashboardView').classList.add('hidden'); }
+}
+$('loginForm').addEventListener('submit', async e=>{
+  e.preventDefault(); $('loginMessage').textContent='';
+  try { const data=await api('/api/admin/login',{method:'POST',body:JSON.stringify({email:$('adminEmail').value.trim(),password:$('adminPassword').value})}); $('signedInEmail').textContent=data.email; $('loginView').classList.add('hidden'); $('dashboardView').classList.remove('hidden'); await loadAll(); }
+  catch(err){ $('loginMessage').textContent=err.message; }
+});
+$('logoutBtn').addEventListener('click', async()=>{try{await api('/api/admin/logout',{method:'POST',body:'{}'});}catch{} $('dashboardView').classList.add('hidden');$('loginView').classList.remove('hidden');$('adminPassword').value='';});
+document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b===btn);b.classList.toggle('light',b!==btn);});
+  $('ordersTab').classList.toggle('hidden',btn.dataset.tab!=='orders');$('productsTab').classList.toggle('hidden',btn.dataset.tab!=='products');
+}));
+async function loadAll(){ await Promise.all([loadStats(),loadOrders(),loadProducts()]); }
+async function loadStats(){try{const s=await api('/api/admin/stats');$('statProducts').textContent=s.products;$('statOrders').textContent=s.orders;$('statPending').textContent=s.pending;$('statRevenue').textContent=money(s.revenue);$('statLowStock').textContent=s.lowStock;}catch(e){showMessage(e.message)}}
+async function loadOrders(){
+ try{
+  const orders=await api('/api/admin/orders');
+  $('ordersBody').innerHTML=orders.length?orders.map(o=>'<tr><td><strong>'+esc(o.order_no)+'</strong><br>'+esc(o.customer_name)+'<br>'+esc(o.customer_email)+'<br>'+esc(o.customer_phone)+'<br><span class="muted">'+esc(o.customer_address)+'</span><br><span class="muted">'+esc(o.created_at)+'</span></td><td class="order-items">'+(o.items||[]).map(i=>esc(i.product_name)+' × '+esc(i.quantity)).join('<br>')+'</td><td><strong>'+money(o.total)+'</strong></td><td>'+esc(o.payment_reference||'No reference')+'</td><td><select class="admin-control payment-select" data-id="'+esc(o.id)+'"><option value="pending_verification" '+(o.payment_status==='pending_verification'?'selected':'')+'>Awaiting verification</option><option value="paid" '+(o.payment_status==='paid'?'selected':'')+'>Paid / verified</option><option value="rejected" '+(o.payment_status==='rejected'?'selected':'')+'>Rejected</option></select></td><td><select class="admin-control order-select" data-id="'+esc(o.id)+'">'+['Pending','Processing','Shipped','Delivered','Cancelled'].map(s=>'<option '+(o.status===s?'selected':'')+'>'+s+'</option>').join('')+'</select></td></tr>').join(''):'<tr><td colspan="6">No orders yet.</td></tr>';
+  document.querySelectorAll('.payment-select').forEach(el=>el.addEventListener('change',async()=>{try{await api('/api/admin/orders/'+el.dataset.id+'/payment-status',{method:'PUT',body:JSON.stringify({payment_status:el.value})});showMessage('Payment status saved.',true);}catch(e){showMessage(e.message);await loadOrders();}}));
+  document.querySelectorAll('.order-select').forEach(el=>el.addEventListener('change',async()=>{try{await api('/api/admin/orders/'+el.dataset.id+'/status',{method:'PUT',body:JSON.stringify({status:el.value})});showMessage('Order status updated.',true);await loadStats();}catch(e){showMessage(e.message);await loadOrders();}}));
+ }catch(e){$('ordersBody').innerHTML='<tr><td colspan="6">'+esc(e.message)+'</td></tr>';}
+}
+async function loadProducts(){
+ try{const products=await api('/api/admin/products');$('productsBody').innerHTML=products.length?products.map(p=>'<tr><td><img class="admin-product-img" src="'+esc(p.image)+'" alt="" onerror="this.style.display=\'none\'"></td><td><strong>'+esc(p.name)+'</strong><br><span class="muted">'+esc(p.description||'')+'</span></td><td>'+esc(p.category)+'</td><td>'+money(p.price)+'</td><td>'+esc(p.stock)+'</td><td><button class="admin-btn light edit-product" data-id="'+esc(p.id)+'">Edit</button> <button class="admin-btn danger delete-product" data-id="'+esc(p.id)+'">Delete</button></td></tr>').join(''):'<tr><td colspan="6">No products found.</td></tr>';
+  document.querySelectorAll('.edit-product').forEach(b=>b.addEventListener('click',()=>editProduct(products.find(p=>String(p.id)===b.dataset.id))));
+  document.querySelectorAll('.delete-product').forEach(b=>b.addEventListener('click',async()=>{if(!confirm('Delete this product? This cannot be undone.'))return;try{await api('/api/admin/products/'+b.dataset.id,{method:'DELETE'});showMessage('Product deleted.',true);await loadProducts();await loadStats();}catch(e){showMessage(e.message);}}));
+ }catch(e){$('productsBody').innerHTML='<tr><td colspan="6">'+esc(e.message)+'</td></tr>';}
+}
+function editProduct(p){if(!p)return;$('productId').value=p.id;$('productName').value=p.name;$('productCategory').value=p.category;$('productPrice').value=p.price;$('productStock').value=p.stock;$('productImage').value=p.image;$('productDescription').value=p.description||'';$('productFormTitle').textContent='Edit product';$('saveProductBtn').textContent='Update product';$('cancelEditBtn').classList.remove('hidden');document.querySelector('[data-tab="products"]').click();window.scrollTo({top:0,behavior:'smooth'});}
+function resetProductForm(){$('productForm').reset();$('productId').value='';$('productStock').value='0';$('productFormTitle').textContent='Add a product';$('saveProductBtn').textContent='Save product';$('cancelEditBtn').classList.add('hidden');}
+$('cancelEditBtn').addEventListener('click',resetProductForm);
+$('productForm').addEventListener('submit',async e=>{e.preventDefault();const id=$('productId').value;const product={name:$('productName').value.trim(),category:$('productCategory').value,price:Number($('productPrice').value),stock:Number($('productStock').value),image:$('productImage').value.trim(),description:$('productDescription').value.trim()};try{await api(id?'/api/admin/products/'+id:'/api/admin/products',{method:id?'PUT':'POST',body:JSON.stringify(product)});showMessage(id?'Product updated.':'Product added.',true);resetProductForm();await loadProducts();await loadStats();}catch(err){showMessage(err.message);}});
+$('refreshOrders').addEventListener('click',async()=>{await loadOrders();await loadStats();});
+checkAdmin();
+</script>
+</body>
+</html>
