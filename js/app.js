@@ -103,6 +103,10 @@
   document.addEventListener("DOMContentLoaded", function () {
     window.updateCartCount();
     renderFeatured();
+    processPendingAdd();
   });
-  window.addEventListener("shoppingdavid:products-ready", renderFeatured);
+  window.addEventListener("shoppingdavid:products-ready", function () {
+    renderFeatured();
+    processPendingAdd();
+  });
 })();
