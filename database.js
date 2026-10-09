@@ -74,10 +74,19 @@ if (!orderColumns.includes("payment_status")) {
 
 const adminEmail = process.env.ADMIN_EMAIL || "admin@shoppingdavid.com";
 const adminPassword = process.env.ADMIN_PASSWORD || "ChangeThisPassword123!";
+const adminHash = bcrypt.hashSync(adminPassword, 12);
 const existingAdmin = db.prepare("SELECT id FROM admins WHERE email = ?").get(adminEmail);
-if (!existingAdmin) {
-  const hash = bcrypt.hashSync(adminPassword, 12);
-  db.prepare("INSERT INTO admins (email, password_hash) VALUES (?, ?)").run(adminEmail, hash);
+if (existingAdmin) {
+  if (process.env.ADMIN_PASSWORD) {
+    db.prepare("UPDATE admins SET password_hash = ? WHERE email = ?").run(adminHash, adminEmail);
+  }
+} else {
+  const defaultAdmin = db.prepare("SELECT id FROM admins WHERE email = 'admin@shoppingdavid.com'").get();
+  if (process.env.ADMIN_EMAIL && defaultAdmin) {
+    db.prepare("UPDATE admins SET email = ?, password_hash = ? WHERE id = ?").run(adminEmail, adminHash, defaultAdmin.id);
+  } else {
+    db.prepare("INSERT INTO admins (email, password_hash) VALUES (?, ?)").run(adminEmail, adminHash);
+  }
 }
 
 const count = db.prepare("SELECT COUNT(*) AS count FROM products").get().count;
