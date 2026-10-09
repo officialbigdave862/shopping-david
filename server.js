@@ -166,6 +166,17 @@ app.put("/api/admin/orders/:id/status", adminOnly, (req, res) => {
   res.json({ message: "Order status updated." });
 });
 
+app.put("/api/admin/orders/:id/payment-status", adminOnly, (req, res) => {
+  const allowed = ["pending_verification", "paid", "rejected"];
+  const paymentStatus = String(req.body.payment_status || "");
+  if (!allowed.includes(paymentStatus)) {
+    return res.status(400).json({ error: "Invalid payment status." });
+  }
+  const result = db.prepare("UPDATE orders SET payment_status = ? WHERE id = ?").run(paymentStatus, req.params.id);
+  if (!result.changes) return res.status(404).json({ error: "Order not found." });
+  res.json({ message: "Payment status updated.", payment_status: paymentStatus });
+});
+
 app.get("/api/admin/stats", adminOnly, (req, res) => {
   const products = db.prepare("SELECT COUNT(*) AS count FROM products").get().count;
   const orders = db.prepare("SELECT COUNT(*) AS count FROM orders").get().count;
