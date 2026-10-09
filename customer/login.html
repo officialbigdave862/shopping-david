@@ -87,7 +87,7 @@
           if(!response.ok) throw new Error(result.error||"Unable to complete your request.");
           message.textContent=mode==="register"?"Your account has been created.":"You are now logged in.";
           message.className="show success";
-          window.location.href="../index.html";
+          window.location.href="account.html";
         }catch(error){
           message.textContent=error.message||"Connection problem. Please try again.";
           message.className="show error";
@@ -95,8 +95,7 @@
       });
       fetch("/api/customer/me",{credentials:"same-origin"}).then(r=>r.ok?r.json():null).then(data=>{
         if(data&&data.authenticated){
-          message.textContent="You are already logged in as "+data.customer.name+".";
-          message.className="show success";
+          window.location.replace("account.html");
         }
       }).catch(()=>{});
     })();
