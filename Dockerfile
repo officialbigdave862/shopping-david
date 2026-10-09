@@ -1,11 +1,18 @@
-FROM php:8.2-apache
+FROM node:22-bookworm-slim
 
-RUN docker-php-ext-install mysqli pdo pdo_mysql
+WORKDIR /app
 
-COPY . /var/www/html/
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN chown -R www-data:www-data /var/www/html
+COPY package*.json ./
 
-RUN a2enmod rewrite
+RUN npm install --omit=dev
 
-EXPOSE 80
+COPY . .
+
+ENV NODE_ENV=production
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
