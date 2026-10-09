@@ -19,7 +19,7 @@
     const count = window.getShoppingDavidCart().reduce((sum, item) => sum + Math.max(1, Number(item.qty) || 1), 0);
     document.querySelectorAll(".cart-count").forEach(el => { el.textContent = String(count); });
   };
-  window.addToCart = function (id) {
+  function addProductToCart(id) {
     const product = (window.PRODUCTS || []).find(p => Number(p.id) === Number(id));
     if (!product) { alert("This product is not available right now. Please refresh the page."); return; }
     const cart = window.getShoppingDavidCart();
@@ -36,7 +36,36 @@
     toast.textContent = product.name + " added to cart";
     toast.classList.add("show");
     window.setTimeout(() => toast.classList.remove("show"), 2200);
+  }
+
+  window.addToCart = async function (id) {
+    try {
+      const response = await fetch("/api/customer/me", { credentials: "same-origin", cache: "no-store" });
+      const data = response.ok ? await response.json() : null;
+      if (!data || !data.authenticated || !data.customer) {
+        sessionStorage.setItem("shoppingDavidPendingAdd", String(id));
+        const next = window.location.pathname + window.location.search;
+        window.location.href = "/customer/login.php?next=" + encodeURIComponent(next);
+        return;
+      }
+      addProductToCart(id);
+    } catch (_) {
+      alert("We couldn't check your login. Please refresh the page and try again.");
+    }
   };
+
+  async function processPendingAdd() {
+    const pendingId = sessionStorage.getItem("shoppingDavidPendingAdd");
+    if (!pendingId) return;
+    try {
+      const response = await fetch("/api/customer/me", { credentials: "same-origin", cache: "no-store" });
+      const data = response.ok ? await response.json() : null;
+      if (!data || !data.authenticated || !data.customer) return;
+      if (!(window.PRODUCTS || []).some(p => Number(p.id) === Number(pendingId))) return;
+      sessionStorage.removeItem("shoppingDavidPendingAdd");
+      addProductToCart(pendingId);
+    } catch (_) {}
+  }
 
   window.renderShoppingDavidProduct = function (product) {
     const name = escapeHtml(product.name);
