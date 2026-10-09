@@ -59,6 +59,19 @@ CREATE TABLE IF NOT EXISTS order_items (
 );
 `);
 
+
+/* Add payment tracking fields to existing databases without deleting orders. */
+const orderColumns = db.prepare("PRAGMA table_info(orders)").all().map(column => column.name);
+if (!orderColumns.includes("payment_method")) {
+  db.exec("ALTER TABLE orders ADD COLUMN payment_method TEXT NOT NULL DEFAULT 'moniepoint_transfer'");
+}
+if (!orderColumns.includes("payment_reference")) {
+  db.exec("ALTER TABLE orders ADD COLUMN payment_reference TEXT DEFAULT ''");
+}
+if (!orderColumns.includes("payment_status")) {
+  db.exec("ALTER TABLE orders ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'pending_verification'");
+}
+
 const adminEmail = process.env.ADMIN_EMAIL || "admin@shoppingdavid.com";
 const adminPassword = process.env.ADMIN_PASSWORD || "ChangeThisPassword123!";
 const existingAdmin = db.prepare("SELECT id FROM admins WHERE email = ?").get(adminEmail);
