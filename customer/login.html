@@ -87,7 +87,10 @@
           if(!response.ok) throw new Error(result.error||"Unable to complete your request.");
           message.textContent=mode==="register"?"Your account has been created.":"You are now logged in.";
           message.className="show success";
-          window.location.href="account.html";
+          const requestedNext = new URLSearchParams(window.location.search).get("next") || "";
+          const safeNext = requestedNext.startsWith("/") && !requestedNext.startsWith("//") &&
+            !requestedNext.startsWith("/customer/login") ? requestedNext : "/customer/account.html";
+          window.location.href = safeNext;
         }catch(error){
           message.textContent=error.message||"Connection problem. Please try again.";
           message.className="show error";
@@ -95,7 +98,10 @@
       });
       fetch("/api/customer/me",{credentials:"same-origin"}).then(r=>r.ok?r.json():null).then(data=>{
         if(data&&data.authenticated){
-          window.location.replace("account.html");
+          const requestedNext = new URLSearchParams(window.location.search).get("next") || "";
+          const safeNext = requestedNext.startsWith("/") && !requestedNext.startsWith("//") &&
+            !requestedNext.startsWith("/customer/login") ? requestedNext : "/customer/account.html";
+          window.location.replace(safeNext);
         }
       }).catch(()=>{});
     })();
