@@ -71,7 +71,7 @@ body{margin:0;background:var(--admin-bg);color:var(--admin-ink);font-family:Inte
         <div><label for="productCategory">Category</label><select id="productCategory" required><option value="fashion">Clothes & Fashion</option><option value="beverages">Beverages</option><option value="gadgets">Gadgets</option><option value="daily-needs">Daily Needs</option></select></div>
         <div><label for="productPrice">Price (₦)</label><input id="productPrice" type="number" min="1" step="1" required></div>
         <div><label for="productStock">Stock quantity</label><input id="productStock" type="number" min="0" step="1" value="0" required></div>
-        <div class="full"><label for="productImage">Image URL</label><input id="productImage" type="url" placeholder="https://..." required></div>
+        <div class="full"><label for="productImage">Product image file</label><input id="productImage" type="file" accept="image/*"><small class="muted">Choose an image from your computer or phone. Maximum file size: 3 MB. When editing, leave this empty to keep the current image.</small><div id="productImagePreviewWrap" class="hidden" style="margin-top:10px"><img id="productImagePreview" class="admin-product-img" alt="Selected product preview" style="width:110px;height:110px"></div></div>
         <div class="full"><label for="productDescription">Description</label><textarea id="productDescription"></textarea></div>
         <div class="full"><button class="admin-btn gold" type="submit" id="saveProductBtn">Save product</button> <button class="admin-btn light hidden" type="button" id="cancelEditBtn">Cancel edit</button></div>
       </form>
@@ -85,6 +85,16 @@ body{margin:0;background:var(--admin-bg);color:var(--admin-ink);font-family:Inte
 <script>
 const $ = id => document.getElementById(id);
 const money = n => '₦' + Number(n || 0).toLocaleString('en-NG');
+let currentProductImage = '';
+$('productImage').addEventListener('change', () => {
+  const file = $('productImage').files[0];
+  if (!file) { $('productImagePreviewWrap').classList.add('hidden'); return; }
+  if (!file.type.startsWith('image/')) { showMessage('Please choose an image file.'); $('productImage').value=''; return; }
+  if (file.size > 3 * 1024 * 1024) { showMessage('Image is too large. Choose an image under 3 MB.'); $('productImage').value=''; return; }
+  const reader = new FileReader();
+  reader.onload = () => { $('productImagePreview').src = reader.result; $('productImagePreviewWrap').classList.remove('hidden'); };
+  reader.readAsDataURL(file);
+});
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function api(url, options={}) {
   const response = await fetch(url, {credentials:'same-origin', ...options, headers:{'Content-Type':'application/json', ...(options.headers||{})}});
@@ -123,10 +133,16 @@ async function loadProducts(){
   document.querySelectorAll('.delete-product').forEach(b=>b.addEventListener('click',async()=>{if(!confirm('Delete this product? This cannot be undone.'))return;try{await api('/api/admin/products/'+b.dataset.id,{method:'DELETE'});showMessage('Product deleted.',true);await loadProducts();await loadStats();}catch(e){showMessage(e.message);}}));
  }catch(e){$('productsBody').innerHTML='<tr><td colspan="6">'+esc(e.message)+'</td></tr>';}
 }
-function editProduct(p){if(!p)return;$('productId').value=p.id;$('productName').value=p.name;$('productCategory').value=p.category;$('productPrice').value=p.price;$('productStock').value=p.stock;$('productImage').value=p.image;$('productDescription').value=p.description||'';$('productFormTitle').textContent='Edit product';$('saveProductBtn').textContent='Update product';$('cancelEditBtn').classList.remove('hidden');document.querySelector('[data-tab="products"]').click();window.scrollTo({top:0,behavior:'smooth'});}
-function resetProductForm(){$('productForm').reset();$('productId').value='';$('productStock').value='0';$('productFormTitle').textContent='Add a product';$('saveProductBtn').textContent='Save product';$('cancelEditBtn').classList.add('hidden');}
+function editProduct(p){if(!p)return;$('productId').value=p.id;$('productName').value=p.name;$('productCategory').value=p.category;$('productPrice').value=p.price;$('productStock').value=p.stock;currentProductImage=p.image||'';$('productImage').value='';$('productImagePreview').src=currentProductImage;$('productImagePreviewWrap').classList.toggle('hidden',!currentProductImage);$('productDescription').value=p.description||'';$('productFormTitle').textContent='Edit product';$('saveProductBtn').textContent='Update product';$('cancelEditBtn').classList.remove('hidden');document.querySelector('[data-tab="products"]').click();window.scrollTo({top:0,behavior:'smooth'});}
+function resetProductForm(){$('productForm').reset();currentProductImage='';$('productImagePreviewWrap').classList.add('hidden');$('productImagePreview').removeAttribute('src');$('productId').value='';$('productStock').value='0';$('productFormTitle').textContent='Add a product';$('saveProductBtn').textContent='Save product';$('cancelEditBtn').classList.add('hidden');}
 $('cancelEditBtn').addEventListener('click',resetProductForm);
-$('productForm').addEventListener('submit',async e=>{e.preventDefault();const id=$('productId').value;const product={name:$('productName').value.trim(),category:$('productCategory').value,price:Number($('productPrice').value),stock:Number($('productStock').value),image:$('productImage').value.trim(),description:$('productDescription').value.trim()};try{await api(id?'/api/admin/products/'+id:'/api/admin/products',{method:id?'PUT':'POST',body:JSON.stringify(product)});showMessage(id?'Product updated.':'Product added.',true);resetProductForm();await loadProducts();await loadStats();}catch(err){showMessage(err.message);}});
+$('productForm').addEventListener('submit',async e=>{e.preventDefault();const id=$('productId').value;const file=$('productImage').files[0];let image=currentProductImage;
+ try {
+  if(file){if(file.size>3*1024*1024)throw new Error('Image is too large. Choose an image under 3 MB.');image=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Could not read image file.'));reader.readAsDataURL(file);});}
+  if(!image)throw new Error('Please choose a product image file.');
+  const product={name:$('productName').value.trim(),category:$('productCategory').value,price:Number($('productPrice').value),stock:Number($('productStock').value),image,description:$('productDescription').value.trim()};
+  await api(id?'/api/admin/products/'+id:'/api/admin/products',{method:id?'PUT':'POST',body:JSON.stringify(product)});
+showMessage(id?'Product updated.':'Product added.',true);resetProductForm();await loadProducts();await loadStats();}catch(err){showMessage(err.message);}});
 $('refreshOrders').addEventListener('click',async()=>{await loadOrders();await loadStats();});
 checkAdmin();
 </script>
