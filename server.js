@@ -60,6 +60,15 @@ app.post("/api/orders", (req, res) => {
   }
 
   const createOrder = db.transaction(() => {
+    // Reject a transfer reference that has already been submitted for any order.
+    // This prevents reuse, but a human must still verify the transfer in Moniepoint.
+    const duplicateReference = db.prepare(
+      "SELECT id, order_no FROM orders WHERE payment_reference <> '' AND LOWER(TRIM(payment_reference)) = LOWER(TRIM(?))"
+    ).get(paymentReference);
+    if (duplicateReference) {
+      throw new Error("This transfer reference has already been submitted. Please check your receipt and enter the correct reference.");
+    }
+
     let total = 0;
     const verifiedItems = [];
 
