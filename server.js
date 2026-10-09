@@ -50,13 +50,23 @@ app.post("/api/orders", (req, res) => {
     return res.status(400).json({ error: "Order must contain at least one item." });
   }
 
+  const paymentMethod = String(req.body.payment_method || "moniepoint_transfer");
+  const paymentReference = String(req.body.payment_reference || "").trim().slice(0, 200);
+  if (paymentMethod === "moniepoint_transfer" && !paymentReference) {
+    return res.status(400).json({ error: "Enter your Moniepoint transfer reference." });
+  }
+  if (paymentMethod !== "moniepoint_transfer") {
+    return res.status(400).json({ error: "Unsupported payment method." });
+  }
+
   const createOrder = db.transaction(() => {
     let total = 0;
     const verifiedItems = [];
 
     for (const item of items) {
       const product = db.prepare("SELECT * FROM products WHERE id = ?").get(item.id);
-      const quantity = Math.max(1, Number(item.qty || 1));
+      const quantity = Number(item.qty);
+      if (!Number.isInteger(quantity) || quantity < 1) throw new Error("Product quantities must be whole numbers greater than zero.");
       if (!product) throw new Error(`Product ${item.id} was not found.`);
       if (product.stock < quantity) throw new Error(`${product.name} does not have enough stock.`);
       total += product.price * quantity;
@@ -65,9 +75,10 @@ app.post("/api/orders", (req, res) => {
 
     const orderNo = "SD" + Date.now().toString().slice(-8);
     const result = db.prepare(`
-      INSERT INTO orders (order_no, customer_name, customer_email, customer_phone, customer_address, total, status)
-      VALUES (?, ?, ?, ?, ?, ?, 'Pending')
-    `).run(orderNo, customer.name, customer.email, customer.phone, customer.address, total);
+      INSERT INTO orders
+        (order_no, customer_name, customer_email, customer_phone, customer_address, total, status, payment_method, payment_reference, payment_status)
+      VALUES (?, ?, ?, ?, ?, ?, 'Pending', ?, ?, 'pending_verification')
+    `).run(orderNo, customer.name, customer.email, customer.phone, customer.address, total, paymentMethod, paymentReference);
 
     const orderId = result.lastInsertRowid;
     const addItem = db.prepare(`
@@ -81,12 +92,12 @@ app.post("/api/orders", (req, res) => {
       reduceStock.run(item.quantity, item.product.id);
     }
 
-    return { id: orderId, orderNo, total };
+    return { id: orderId, orderNo, total, paymentStatus: "pending_verification" };
   });
 
   try {
     const order = createOrder();
-    res.status(201).json({ message: "Order placed successfully.", ...order });
+    res.status(201).json({ message: "Order placed successfully. Payment reference saved for manual verification.", ...order });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -197,6 +208,14 @@ app.post("/api/customer/login", async (req, res) => {
 app.get("/api/customer/me", (req, res) => {
   if (!req.session.customer) return res.status(401).json({ authenticated: false });
   res.json({ authenticated: true, customer: req.session.customer });
+});
+
+
+app.get("/api/customer/orders", (req, res) => {
+  if (!req.session.customer) return res.status(401).json({ error: "Please log in to view your orders." });
+  const orders = db.prepare("SELECT id, order_no, total, status, payment_method, payment_reference, payment_status, created_at FROM orders WHERE LOWER(customer_email) = LOWER(?) ORDER BY created_at DESC").all(req.session.customer.email);
+  const getItems = db.prepare("SELECT product_name, price, quantity FROM order_items WHERE order_id = ?");
+  res.json(orders.map(order => ({ ...order, items: getItems.all(order.id) })));
 });
 
 app.post("/api/customer/logout", (req, res) => {
