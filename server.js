@@ -207,6 +207,8 @@ app.post("/api/customer/logout", (req, res) => {
   });
 });
 
+app.get("/customer/login.php", (req, res) => res.sendFile(path.join(__dirname, "customer", "login.html")));
+
 app.use(express.static(__dirname));
 
 app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "admin", "index.html")));
