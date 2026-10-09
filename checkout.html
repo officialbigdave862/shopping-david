@@ -239,614 +239,132 @@
 
 
     <!-- MAIN APP JAVASCRIPT -->
-    <script src="/SHOPPING%20DAVID/js/app.js"></script>
+    <script src="js/app.js"></script>
 
 
     <!-- CHECKOUT JAVASCRIPT -->
     <script>
-
-    document.addEventListener("DOMContentLoaded", async function () {
-
-        const summary =
-            document.getElementById("checkoutSummary");
-
-        const form =
-            document.getElementById("checkoutForm");
-
-        const success =
-            document.getElementById("successBox");
-
-
-        /*
-         * LOAD CART AND CALCULATE TOTAL
-         */
-        try {
-
-            // Get the same cart used on the Cart page
-            const cart = JSON.parse(
-                localStorage.getItem("shoppingDavidCart") || "[]"
-            );
-
-
-            // Check whether cart is empty
-            if (
-                !Array.isArray(cart) ||
-                cart.length === 0
-            ) {
-
-                summary.innerHTML = `
-
-                    <div class="empty">
-
-                        <h3>Your cart is empty</h3>
-
-                        <p>
-                            Please return to the shop
-                            and add a product.
-                        </p>
-
-                        <a
-                            class="btn btn-primary"
-                            href="shop.html"
-                        >
-                            Continue Shopping
-                        </a>
-
-                    </div>
-
-                `;
-
-                return;
-            }
-
-
-            // Get products from PHP/MySQL
-            const response = await fetch(
-                "/SHOPPING%20DAVID/api/products.php",
-                {
-                    cache: "no-store"
-                }
-            );
-
-
-            if (!response.ok) {
-
-                throw new Error(
-                    "Unable to load products. HTTP " +
-                    response.status
-                );
-
-            }
-
-
-            const products =
-                await response.json();
-
-
-            if (!Array.isArray(products)) {
-
-                throw new Error(
-                    "Invalid product data received."
-                );
-
-            }
-
-
-            let total = 0;
-
-            let itemsHTML = "";
-
-
-            /*
-             * MATCH CART ITEMS WITH DATABASE PRODUCTS
-             */
-            cart.forEach(function (cartItem) {
-
-                const product =
-                    products.find(function (p) {
-
-                        return Number(p.id) ===
-                               Number(cartItem.id);
-
-                    });
-
-
-                if (!product) {
-                    return;
-                }
-
-
-                const quantity =
-                    Number(cartItem.qty) || 1;
-
-
-                const price =
-                    Number(product.price) || 0;
-
-
-                const itemTotal =
-                    price * quantity;
-
-
-                total += itemTotal;
-
-
-                itemsHTML += `
-
-                    <div class="summary-line">
-
-                        <span>
-                            ${product.name}
-                            × ${quantity}
-                        </span>
-
-                        <strong>
-                            ₦${itemTotal.toLocaleString("en-NG")}
-                        </strong>
-
-                    </div>
-
-                `;
-
-            });
-
-
-            /*
-             * MAKE SURE TOTAL IS VALID
-             */
-            if (total <= 0) {
-
-                throw new Error(
-                    "The checkout total could not be calculated."
-                );
-
-            }
-
-
-            /*
-             * DISPLAY ORDER SUMMARY
-             */
-            summary.innerHTML = `
-
-                <h2>Order Summary</h2>
-
-                ${itemsHTML}
-
-                <hr>
-
-                <div class="summary-line">
-
-                    <span>
-                        Delivery
-                    </span>
-
-                    <span>
-                        Calculated at checkout
-                    </span>
-
-                </div>
-
-                <div class="summary-total">
-
-                    <span>
-                        Total
-                    </span>
-
-                    <strong>
-                        ₦${total.toLocaleString("en-NG")}
-                    </strong>
-
-                </div>
-
-            `;
-
-
-            /*
-             * PLACE ORDER
-             */
-            const moniepointBox =
-            document.getElementById("moniepointBox");
-
-        const paymentReference =
-            document.getElementById("paymentReference");
-
-        function updatePaymentDisplay() {
-
-            const selectedPayment =
-                document.querySelector(
-                    'input[name="payment"]:checked'
-                );
-
-            if (
-                selectedPayment &&
-                selectedPayment.value === "moniepoint_transfer"
-            ) {
-
-                moniepointBox.style.display = "block";
-                paymentReference.required = true;
-
-            } else {
-
-                moniepointBox.style.display = "none";
-                paymentReference.required = false;
-                paymentReference.value = "";
-
-            }
-        }
-
-        document
-            .querySelectorAll('input[name="payment"]')
-            .forEach(function (radio) {
-
-                radio.addEventListener(
-                    "change",
-                    updatePaymentDisplay
-                );
-
-            });
-
-        updatePaymentDisplay();
-
-
-        form.addEventListener(
-                "submit",
-                async function (event) {
-
-                    event.preventDefault();
-
-
-                    const formData =
-                        new FormData(form);
-
-
-                    const orderItems =
-                        [];
-
-
-                    cart.forEach(function (cartItem) {
-
-                        const product =
-                            products.find(function (p) {
-
-                                return Number(p.id) ===
-                                       Number(cartItem.id);
-
-                            });
-
-
-                        if (!product) {
-                            return;
-                        }
-
-
-                        orderItems.push({
-
-                            id: Number(product.id),
-
-                            name: product.name,
-
-                            price: Number(product.price),
-
-                            quantity:
-                                Number(cartItem.qty) || 1
-
-                        });
-
-                    });
-
-
-                    const orderData = {
-
-                        customer_name:
-                            formData.get("name"),
-
-                        email:
-                            formData.get("email"),
-
-                        phone:
-                            formData.get("phone"),
-
-                        address:
-                            formData.get("city") +
-                            ", " +
-                            formData.get("address"),
-
-                        items:
-                            orderItems
-
-                    };
-
-try {
-
-    const paymentMethod =
-        formData.get("payment");
-
-
-    /*
-     * MONIEPOINT BANK TRANSFER
-     */
-
-    if (paymentMethod === "moniepoint_transfer") {
-
-        const paymentReference =
-            String(formData.get("payment_reference") || "").trim();
-
-        if (!paymentReference) {
-            throw new Error(
-                "Please enter your Moniepoint transfer reference."
-            );
-        }
-
-        /*
-         * Send the order to the existing orders API.
-         * The extra payment fields are included for future backend
-         * payment-status handling.
-         */
-
-        orderData.payment_method = "moniepoint_transfer";
-        orderData.payment_reference = paymentReference;
-        orderData.payment_status = "pending_verification";
-
-        const orderResponse =
-            await fetch(
-                "/SHOPPING%20DAVID/api/orders.php",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify(orderData)
-                }
-            );
-
-
-        const result =
-            await orderResponse.json();
-
-
-        if (
-            !orderResponse.ok ||
-            !result.success
-        ) {
-
-            throw new Error(
-                result.message ||
-                "Unable to place transfer order."
-            );
-
-        }
-
-
-        /*
-         * SHOW SUCCESS MESSAGE
-         */
-
-        form.style.display = "none";
-
-        summary.style.display = "none";
-
-        success.classList.remove(
-            "hidden"
-        );
-
-
-        success.innerHTML = `
-
-            <div class="empty">
-
-                <h2>
-                    Transfer Order Received!
-                </h2>
-
-                <p>
-                    Thank you for shopping
-                    with SHOPPING DAVID.
-                </p>
-
-                <p>
-                    Your order number is:
-                    <strong>
-                        #${result.order_id}
-                    </strong>
-                </p>
-
-                <p>
-                    Total:
-                    <strong>
-                        ₦${Number(
-                            result.total
-                        ).toLocaleString(
-                            "en-NG"
-                        )}
-                    </strong>
-                </p>
-
-                <p>
-                    Payment reference:
-                    <strong>
-                        ${paymentReference}
-                    </strong>
-                </p>
-
-                <p>
-                    Your transfer will be verified manually.
-                    Please keep your transfer receipt/reference.
-                </p>
-
-                <a
-                    class="btn btn-primary"
-                    href="shop.html"
-                >
-                    Continue Shopping
-                </a>
-
-            </div>
-
-        `;
-
-
-        localStorage.removeItem(
-            "shoppingDavidCart"
-        );
-
-
-        if (
-            typeof updateCartCount ===
-            "function"
-        ) {
-
-            updateCartCount();
-
-        }
-
-        return;
+document.addEventListener("DOMContentLoaded", async function () {
+  const summary = document.getElementById("checkoutSummary");
+  const form = document.getElementById("checkoutForm");
+  const success = document.getElementById("successBox");
+  const moniepointBox = document.getElementById("moniepointBox");
+  const paymentReference = document.getElementById("paymentReference");
+  let cart = [];
+  let products = [];
+  let total = 0;
+
+  function money(amount) {
+    return "₦" + Number(amount || 0).toLocaleString("en-NG");
+  }
+
+  function showMessage(title, message) {
+    summary.innerHTML = '<div class="empty"><h3>' + title + '</h3><p>' + message + '</p><a class="btn btn-primary" href="cart.html">Return to Cart</a></div>';
+  }
+
+  try {
+    cart = JSON.parse(localStorage.getItem("shoppingDavidCart") || "[]");
+    if (!Array.isArray(cart) || cart.length === 0) {
+      showMessage("Your cart is empty", "Please return to the shop and add a product.");
+      return;
     }
 
+    // Render uses the Node.js API hosted on Render, not the old XAMPP PHP path.
+    const response = await fetch("/api/products", { cache: "no-store" });
+    if (!response.ok) throw new Error("Products could not be loaded (HTTP " + response.status + ").");
+    products = await response.json();
+    if (!Array.isArray(products)) throw new Error("The product service returned an unexpected response.");
 
+    let itemsHTML = "";
+    const validCartItems = [];
+    total = 0;
 
-        const result =
-            await orderResponse.json();
-
-
-        if (
-            !orderResponse.ok ||
-            !result.success
-        ) {
-
-            throw new Error(
-                result.message ||
-                "Unable to place order."
-            );
-
-        }
-
-
-        /*
-         * SHOW SUCCESS MESSAGE
-         */
-
-        form.style.display = "none";
-
-        summary.style.display = "none";
-
-        success.classList.remove(
-            "hidden"
-        );
-
-
-        success.innerHTML = `
-
-            <div class="empty">
-
-                <h2>
-                    Order placed successfully!
-                </h2>
-
-                <p>
-                    Thank you for shopping
-                    with SHOPPING DAVID.
-                </p>
-
-                <p>
-                    Your order number is:
-                    <strong>
-                        #${result.order_id}
-                    </strong>
-                </p>
-
-                <p>
-                    Total:
-                    <strong>
-                        ₦${Number(
-                            result.total
-                        ).toLocaleString(
-                            "en-NG"
-                        )}
-                    </strong>
-                </p>
-
-                <a
-                    class="btn btn-primary"
-                    href="shop.html"
-                >
-                    Continue Shopping
-                </a>
-
-            </div>
-
-        `;
-
-
-        localStorage.removeItem(
-            "shoppingDavidCart"
-        );
-
-
-        if (
-            typeof updateCartCount ===
-            "function"
-        ) {
-
-            updateCartCount();
-
-        }
-
-        return;
-    }
-
-
-    throw new Error(
-        "Please select a payment method."
-    );
-
-
-} catch (error) {
-
-    alert(
-        "Order could not be completed: " +
-        error.message
-    );
-
-}
-
-                }
-            );
-
-
-        } catch (error) {
-
-            summary.innerHTML = `
-
-                <div class="empty">
-
-                    <h3>
-                        Unable to load order summary
-                    </h3>
-
-                    <p>
-                        ${error.message}
-                    </p>
-
-                    <a
-                        class="btn btn-primary"
-                        href="cart.html"
-                    >
-                        Return to Cart
-                    </a>
-
-                </div>
-
-            `;
-
-        }
-
+    cart.forEach(function (cartItem) {
+      const product = products.find(function (p) { return Number(p.id) === Number(cartItem.id); });
+      if (!product) return;
+      const quantity = Math.max(1, Number(cartItem.qty) || 1);
+      const itemTotal = Number(product.price) * quantity;
+      if (!Number.isFinite(itemTotal)) return;
+      total += itemTotal;
+      validCartItems.push({ id: Number(product.id), qty: quantity });
+      itemsHTML += '<div class="summary-line"><span>' +
+        String(product.name) + ' × ' + quantity +
+        '</span><strong>' + money(itemTotal) + '</strong></div>';
     });
 
-    </script>
+    cart = validCartItems;
+    if (!cart.length || total <= 0) throw new Error("No valid products were found in your cart.");
+
+    summary.innerHTML = '<h2>Order Summary</h2>' + itemsHTML +
+      '<hr><div class="summary-line"><span>Delivery</span><span>Confirmed after order</span></div>' +
+      '<div class="summary-total"><span>Total</span><strong>' + money(total) + '</strong></div>';
+
+    moniepointBox.style.display = "block";
+    paymentReference.required = true;
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+
+      const reference = String(paymentReference.value || "").trim();
+      if (!reference) {
+        alert("Please enter your Moniepoint transfer reference.");
+        paymentReference.focus();
+        return;
+      }
+
+      const submitButton = form.querySelector('button[type="submit"]');
+      const originalButtonText = submitButton.textContent;
+      submitButton.disabled = true;
+      submitButton.textContent = "Placing order...";
+
+      try {
+        const formData = new FormData(form);
+        const orderData = {
+          customer: {
+            name: String(formData.get("name") || "").trim(),
+            email: String(formData.get("email") || "").trim(),
+            phone: String(formData.get("phone") || "").trim(),
+            address: String(formData.get("city") || "").trim() + ", " +
+              String(formData.get("address") || "").trim()
+          },
+          items: cart
+        };
+
+        const orderResponse = await fetch("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(orderData)
+        });
+        const result = await orderResponse.json().catch(function () { return {}; });
+        if (!orderResponse.ok) {
+          throw new Error(result.error || result.message || "The order could not be placed.");
+        }
+
+        form.style.display = "none";
+        summary.style.display = "none";
+        success.classList.remove("hidden");
+        success.innerHTML = '<div class="empty"><h2>Order received successfully!</h2>' +
+          '<p>Thank you for shopping with SHOPPING DAVID.</p>' +
+          '<p>Order number: <strong>' + String(result.orderNo || result.id || "Received") + '</strong></p>' +
+          '<p>Total: <strong>' + money(result.total || total) + '</strong></p>' +
+          '<p>Transfer reference you entered: <strong>' + reference.replace(/[&<>"]/g, function (ch) { return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[ch]; }) + '</strong></p>' +
+          '<p>Your payment will need to be checked manually. Keep your transfer receipt/reference.</p>' +
+          '<a class="btn btn-primary" href="shop.html">Continue Shopping</a></div>';
+
+        localStorage.removeItem("shoppingDavidCart");
+        if (typeof updateCartCount === "function") updateCartCount();
+      } catch (error) {
+        alert("Order could not be completed: " + error.message);
+        submitButton.disabled = false;
+        submitButton.textContent = originalButtonText;
+      }
+    });
+  } catch (error) {
+    showMessage("Unable to load order summary", error.message);
+  }
+});
+</script>
 
 </body>
 </html>
