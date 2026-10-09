@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login / Sign Up | SHOPPING DAVID</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body{min-height:100vh;background:#f5f6f8;display:flex;flex-direction:column}
+    .account-wrap{width:min(460px,calc(100% - 32px));margin:55px auto;flex:1}
+    .account-card{background:#fff;padding:30px;border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.08)}
+    .account-card h1{margin:0 0 8px;font-size:30px}.muted{color:#667085;margin-bottom:22px}
+    .tabs{display:flex;gap:8px;margin:20px 0}.tabs button{flex:1;padding:12px;border:1px solid #ddd;border-radius:9px;background:#f7f7f7;cursor:pointer;font-weight:700}
+    .tabs button.active{background:#111;color:#fff;border-color:#111}
+    .account-card label{display:block;font-weight:600;margin:14px 0 6px}
+    .account-card input{width:100%;padding:13px;border:1px solid #d4d7dd;border-radius:9px;font:inherit}
+    .account-card .btn{width:100%;margin-top:20px;cursor:pointer}
+    #message{display:none;margin-top:15px;padding:12px;border-radius:8px}#message.show{display:block}
+    #message.error{background:#fff0f0;color:#a40000}#message.success{background:#eaf8ef;color:#176b37}
+    .back-link{display:block;text-align:center;margin-top:18px}
+  </style>
+</head>
+<body>
+  <div class="topbar">SHOPPING DAVID • Your everyday online store</div>
+  <main class="account-wrap">
+    <section class="account-card">
+      <a href="../index.html" class="logo">SHOPPING DAVID</a>
+      <h1 id="formTitle">Welcome back</h1>
+      <p class="muted" id="formSubtitle">Log in to your customer account.</p>
+      <div class="tabs">
+        <button type="button" id="loginTab" class="active">Log In</button>
+        <button type="button" id="registerTab">Create Account</button>
+      </div>
+      <form id="accountForm">
+        <div id="nameField" hidden>
+          <label for="name">Full name</label>
+          <input id="name" name="name" autocomplete="name" placeholder="Your full name">
+        </div>
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" minlength="8" required placeholder="At least 8 characters">
+        <button class="btn btn-primary" id="submitButton" type="submit">Log In</button>
+      </form>
+      <div id="message" role="status"></div>
+      <a class="back-link" href="../shop.html">Continue shopping</a>
+    </section>
+  </main>
+  <script>
+    (function(){
+      const form=document.getElementById("accountForm");
+      const nameField=document.getElementById("nameField");
+      const nameInput=document.getElementById("name");
+      const title=document.getElementById("formTitle");
+      const subtitle=document.getElementById("formSubtitle");
+      const loginTab=document.getElementById("loginTab");
+      const registerTab=document.getElementById("registerTab");
+      const submitButton=document.getElementById("submitButton");
+      const message=document.getElementById("message");
+      let mode="login";
+      function setMode(next){
+        mode=next;
+        const registering=mode==="register";
+        nameField.hidden=!registering;
+        nameInput.required=registering;
+        document.getElementById("password").autocomplete=registering?"new-password":"current-password";
+        title.textContent=registering?"Create your account":"Welcome back";
+        subtitle.textContent=registering?"Sign up to create your SHOPPING DAVID account.":"Log in to your customer account.";
+        submitButton.textContent=registering?"Create Account":"Log In";
+        loginTab.classList.toggle("active",!registering);
+        registerTab.classList.toggle("active",registering);
+        message.className="";message.textContent="";
+      }
+      loginTab.addEventListener("click",()=>setMode("login"));
+      registerTab.addEventListener("click",()=>setMode("register"));
+      form.addEventListener("submit",async function(event){
+        event.preventDefault();
+        message.className="";message.textContent="Please wait…";message.classList.add("show");
+        submitButton.disabled=true;
+        const payload={email:document.getElementById("email").value.trim(),password:document.getElementById("password").value};
+        if(mode==="register") payload.name=nameInput.value.trim();
+        try{
+          const response=await fetch("/api/customer/"+(mode==="register"?"register":"login"),{
+            method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify(payload)
+          });
+          const result=await response.json();
+          if(!response.ok) throw new Error(result.error||"Unable to complete your request.");
+          message.textContent=mode==="register"?"Your account has been created.":"You are now logged in.";
+          message.className="show success";
+          window.location.href="../index.html";
+        }catch(error){
+          message.textContent=error.message||"Connection problem. Please try again.";
+          message.className="show error";
+        }finally{submitButton.disabled=false;}
+      });
+      fetch("/api/customer/me",{credentials:"same-origin"}).then(r=>r.ok?r.json():null).then(data=>{
+        if(data&&data.authenticated){
+          message.textContent="You are already logged in as "+data.customer.name+".";
+          message.className="show success";
+        }
+      }).catch(()=>{});
+    })();
+  </script>
+</body>
+</html>
