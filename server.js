@@ -248,6 +248,12 @@ app.post("/api/customer/logout", (req, res) => {
 
 app.get("/customer/login.php", (req, res) => res.sendFile(path.join(__dirname, "customer", "login.html")));
 
+// Keep older login links working by redirecting them to the actual HTML page.
+app.get("/customer/login.php", (req, res) => {
+  const query = req.originalUrl.includes("?") ? req.originalUrl.slice(req.originalUrl.indexOf("?")) : "";
+  res.redirect(302, "/customer/login.html" + query);
+});
+
 app.use(express.static(__dirname));
 
 app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "admin", "index.html")));
