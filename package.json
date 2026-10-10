@@ -1,7 +1,8 @@
+```json
 {
   "name": "shopping-david",
   "version": "1.0.0",
-  "description": "SHOPPING DAVID e-commerce website with Express, SQLite and admin dashboard",
+  "description": "SHOPPING DAVID e-commerce website with Express, PostgreSQL and admin dashboard",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -11,6 +12,8 @@
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.8.1",
     "express": "^5.1.0",
-    "express-session": "^1.18.2"
+    "express-session": "^1.18.2",
+    "pg": "^8.16.3"
   }
 }
+```
