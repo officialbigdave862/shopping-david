@@ -1,4 +1,4 @@
-```json
+
 {
   "name": "shopping-david",
   "version": "1.0.0",
@@ -16,4 +16,3 @@
     "pg": "^8.16.3"
   }
 }
-```
