@@ -24,7 +24,7 @@
 
   window.dispatchEvent(new CustomEvent("shoppingdavid:products-ready", {detail:{products:window.PRODUCTS, source:"fallback"}}));
 
-  fetch("/api/products")
+  fetch("/api/products", { cache: "no-store", headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" } })
     .then(function (response) {
       if (!response.ok) throw new Error("Product API returned HTTP " + response.status);
       return response.json();
