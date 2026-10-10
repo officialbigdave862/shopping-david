@@ -26,6 +26,10 @@ function adminOnly(req, res, next) {
 app.get("/api/health", (req, res) => res.json({ ok: true, service: "SHOPPING DAVID" }));
 
 app.get("/api/products", (req, res) => {
+  // Product listings must always be fresh so newly added admin products appear for every visitor.
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
   const { category, q } = req.query;
   let sql = "SELECT * FROM products WHERE 1=1";
   const params = [];
