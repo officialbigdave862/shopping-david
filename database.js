@@ -1,4 +1,8 @@
-const { Pool } = require("pg");
+const pg = require("pg");
+const { Pool } = pg;
+
+pg.types.setTypeParser(20, value => Number(value));
+pg.types.setTypeParser(1700, value => Number(value));
 const bcrypt = require("bcryptjs");
 
 if (!process.env.DATABASE_URL) {
