@@ -7,6 +7,7 @@ const { randomBytes } = require("crypto");
 const { db, initializeDatabase } = require("./database");
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
